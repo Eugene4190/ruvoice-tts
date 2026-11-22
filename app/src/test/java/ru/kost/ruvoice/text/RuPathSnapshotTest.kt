@@ -12,7 +12,6 @@ import ru.kost.ruvoice.Prefs
 import ru.kost.ruvoice.TestData
 import java.io.File
 import java.security.MessageDigest
-import java.util.stream.Collectors
 
 /**
  * Страховка русского пути на время правок белорусского слоя: вывод RuLayer.prepare и полного пути куска
@@ -196,7 +195,11 @@ class RuPathSnapshotTest {
             // stress.bin — абсолютные get по буферу, словари — готовые карты, ленивые регулярки Normalizer — by lazy
             // с блокировкой; Replacements кладёт скомпилированный regex правила в поле — гонка безвредна (тот же Regex,
             // Pattern в final-поле); Stress с кэшем фраз свой на вариант.
-            val got = jobs.parallelStream().map { it() }.collect(Collectors.toList()).flatten().toMap()
+            val results = jobs.map { it() }
+            val entries = results.flatten()
+            val duplicates = entries.groupingBy { it.first }.eachCount().filterValues { it > 1 }
+            assertTrue("повторяющиеся ключи снимка: $duplicates", duplicates.isEmpty())
+            val got = entries.toMap()
             if (System.getProperty("ruvoice.snapshot.write") == "true") {
                 snapshot.writeText("# RuPathSnapshotTest: вариант<TAB>sha256 вывода; перезапись -Druvoice.snapshot.write=true\n" +
                     got.entries.joinToString("") { "${it.key}\t${it.value}\n" })
