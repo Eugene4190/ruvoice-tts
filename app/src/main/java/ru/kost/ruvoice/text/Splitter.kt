@@ -62,9 +62,13 @@ object Splitter {
         // CRLF → LF первым делом (review final-fix п.9): иначе hyphenBreakRe требует «-\n» вплотную
         // и не видит перенос через «-\r\n» — дефис после разрыва строки не убирается.
         var s = text.replace("\r\n", "\n")
-        if (rules.on("dehyphen")) s = dehyphenate(s, layer)
+        if (rules.on("dehyphen")) {
+            s = dehyphenate(s, layer)
+            // Исправление разрывов внутри строки — часть того же правила: при выключенном dehyphen
+            // текст должен остаться без изменений, как и в прежнем русском пути.
+            s = TextRepair.repair(s, layer)
+        }
         if (rules.on("soft_break")) s = softLineBreakRe.replace(s, " ")
-        s = TextRepair.repair(s, layer)
         return s.split(Regex("\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
     }
 
