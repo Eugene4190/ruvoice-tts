@@ -24,7 +24,7 @@ class ServiceSmokeTest {
     @Test fun synthesizesToFileAtThreeRates() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val ready = CountDownLatch(1); var status = -1
-        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, "ru.kost.ruvoice")
+        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, ctx.packageName)
         assertTrue("engine bind timeout", ready.await(60, TimeUnit.SECONDS))
         assertEquals(TextToSpeech.SUCCESS, status)
         assertEquals(TextToSpeech.LANG_COUNTRY_AVAILABLE, tts.setLanguage(Locale("ru", "RU")))
@@ -58,7 +58,7 @@ class ServiceSmokeTest {
         assumeTrue("нет русского текущего голоса: $current", current != null && Speaker.lang(current, packs) == "ru")
         val expected = Speaker.ttsName(current!!, packs)
         val ready = CountDownLatch(1); var status = -1
-        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, "ru.kost.ruvoice")
+        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, ctx.packageName)
         try {
             assertTrue("engine bind timeout", ready.await(60, TimeUnit.SECONDS))
             assertEquals(TextToSpeech.SUCCESS, status)
@@ -79,7 +79,7 @@ class ServiceSmokeTest {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         val threads = InstrumentationRegistry.getArguments().getString("threads")?.toInt()
         val ready = CountDownLatch(1)
-        val tts = TextToSpeech(ctx, { ready.countDown() }, "ru.kost.ruvoice")
+        val tts = TextToSpeech(ctx, { ready.countDown() }, ctx.packageName)
         assertTrue("engine bind timeout", ready.await(60, TimeUnit.SECONDS))
         tts.setLanguage(Locale("ru", "RU"))
         for (run in 0..2) {
@@ -111,7 +111,7 @@ class ServiceSmokeTest {
             "Голос робота.<break time=\"700ms\"/><prosody pitch=\"robot\">Голос робота.</prosody><break time=\"1s\"/>" +
             "<prosody pitch=\"x-high\">Высоко</prosody>, <prosody pitch=\"x-low\">низко</prosody>, обычно.</speak>"
         val ready = CountDownLatch(1); var status = -1
-        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, "ru.kost.ruvoice")
+        val tts = TextToSpeech(ctx, { s -> status = s; ready.countDown() }, ctx.packageName)
         assertTrue("engine bind timeout", ready.await(60, TimeUnit.SECONDS))
         assertEquals(TextToSpeech.SUCCESS, status)
         tts.setLanguage(Locale("ru", "RU"))
