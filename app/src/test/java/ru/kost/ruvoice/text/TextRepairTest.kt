@@ -51,4 +51,13 @@ class TextRepairTest {
         assertEquals("техника- ми", TextRepair.repair("техника- ми", BeLayer))
         assertEquals("ін-фармацыі", TextRepair.repair("ін-фармацыі", BeLayer))
     }
+
+    @Test fun repairedTextKeepsOriginalHighlightOffsets() {
+        val mapped = TextRepair.mapped("техника- ми", RuLayer)
+        assertEquals("техниками", mapped.text)
+        assertEquals(0, mapped.orig(0))
+        assertEquals(9, mapped.orig(7))
+        assertEquals(10, mapped.orig(8))
+    }
+
 }
