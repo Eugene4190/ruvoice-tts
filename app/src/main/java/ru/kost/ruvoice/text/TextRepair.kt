@@ -6,6 +6,9 @@ package ru.kost.ruvoice.text
  * Only joins a split when the resulting form is present in the bundled AOT morphology
  * table, or when the exact repair is covered by the small reviewed exception list.
  * Real hyphenated Russian words are delegated to RuLayer.keepHyphen().
+ *
+ * The mapped form keeps every output character tied to its original input position,
+ * so Android TTS word highlighting still points to the full source spelling.
  */
 internal object TextRepair {
     private val splitWord = Regex(
@@ -34,39 +37,71 @@ internal object TextRepair {
         else -> joined
     }
 
-    fun repair(source: String, layer: TextLayer): String {
-        if (layer.code != "ru" || source.isEmpty()) return source
+    private fun identity(source: String): SpanText.Mapped =
+        SpanText.Mapped(source, IntArray(source.length + 1) { it })
 
-        var result = splitWord.replace(source) { m ->
-            val left = m.groups["left"]!!.value
-            val right = m.groups["right"]!!.value
-            val joined = left + right
-            val normalized = joined.lowercase().replace('ё', 'е')
-            val exact = confirmed.contains(normalized)
-            val compound = layer.keepHyphen(left.lowercase(), right.lowercase())
-            val morphMatch = known(joined) &&
-                (Normalizer.morph?.tags(left)?.let { it == 0 } ?: false ||
-                 Normalizer.morph?.tags(right)?.let { it == 0 } ?: false)
+    /** Apply one split pattern, composing its output-to-source offsets with the incoming map. */
+    private fun joinMatches(
+        input: SpanText.Mapped,
+        regex: Regex,
+        shouldJoin: (left: String, right: String) -> Boolean
+    ): SpanText.Mapped {
+        val source = input.text
+        val out = StringBuilder(source.length)
+        val offsets = ArrayList<Int>(source.length + 1)
 
-            when {
-                exact -> preserveCase(left + right, joined)
-                compound -> m.value
-                morphMatch -> preserveCase(left + right, joined)
-                else -> m.value
+        fun keep(from: Int, until: Int) {
+            for (i in from until until) {
+                out.append(source[i])
+                offsets += input.orig(i)
             }
         }
 
-        result = splitBySpace.replace(result) { m ->
-            val left = m.groups["left"]!!.value
-            val right = m.groups["right"]!!.value
-            val joined = left + right
-            val normalized = joined.lowercase().replace('ё', 'е')
+        var at = 0
+        for (match in regex.findAll(source)) {
+            keep(at, match.range.first)
+            val leftGroup = match.groups["left"]!!
+            val rightGroup = match.groups["right"]!!
+            val left = leftGroup.value
+            val right = rightGroup.value
+            if (shouldJoin(left, right)) {
+                val joined = preserveCase(left + right, left + right)
+                out.append(joined)
+                for (i in leftGroup.range) offsets += input.orig(i)
+                for (i in rightGroup.range) offsets += input.orig(i)
+            } else {
+                keep(match.range.first, match.range.last + 1)
+            }
+            at = match.range.last + 1
+        }
+        keep(at, source.length)
+        offsets += input.orig(source.length)
+        return SpanText.Mapped(out.toString(), offsets.toIntArray())
+    }
+
+    fun mapped(source: String, layer: TextLayer): SpanText.Mapped {
+        if (layer.code != "ru" || source.isEmpty()) return identity(source)
+
+        var result = joinMatches(identity(source), splitWord) { left, right ->
+            val normalized = (left + right).lowercase().replace('ё', 'е')
+            val exact = confirmed.contains(normalized)
+            val compound = layer.keepHyphen(left.lowercase(), right.lowercase())
+            val morphMatch = known(left + right) &&
+                (Normalizer.morph?.tags(left)?.let { it == 0 } ?: false ||
+                 Normalizer.morph?.tags(right)?.let { it == 0 } ?: false)
+            exact || (!compound && morphMatch)
+        }
+
+        result = joinMatches(result, splitBySpace) { left, right ->
+            val normalized = (left + right).lowercase().replace('ё', 'е')
             val exact = confirmed.contains(normalized)
             val morph = Normalizer.morph
-            val morphMatch = morph != null && morph.tags(joined) != 0 &&
+            val morphMatch = morph != null && morph.tags(left + right) != 0 &&
                 (morph.tags(left) == 0 || morph.tags(right) == 0)
-            if (exact || morphMatch) preserveCase(left + right, joined) else m.value
+            exact || morphMatch
         }
         return result
     }
+
+    fun repair(source: String, layer: TextLayer): String = mapped(source, layer).text
 }
