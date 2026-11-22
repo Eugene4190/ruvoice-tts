@@ -9,10 +9,10 @@ package ru.kost.ruvoice.text
  */
 internal object TextRepair {
     private val splitWord = Regex(
-        """(?<![\\p{L}])(?<left>[А-Яа-яЁё]{2,})[ \\t]*(?<sep>[-‐‑‒–—])[ \\t]*(?<right>[А-Яа-яЁё]{2,})(?![\\p{L}])"""
+        """(?<![\p{L}])(?<left>[А-Яа-яЁё]{2,})[ \t]*(?<sep>[-‐‑‒–—])[ \t]*(?<right>[А-Яа-яЁё]{2,})(?![\p{L}])"""
     )
     private val splitBySpace = Regex(
-        """(?<![\\p{L}])(?<left>[А-Яа-яЁё]{6,})[ \\t]+(?<right>[а-яё]{2,5})(?![\\p{L}])"""
+        """(?<![\p{L}])(?<left>[А-Яа-яЁё]{6,})[ \t]+(?<right>[а-яё]{2,5})(?![\p{L}])"""
     )
 
     // Confirmed from the user's book examples and manually reviewed OCR cases.
