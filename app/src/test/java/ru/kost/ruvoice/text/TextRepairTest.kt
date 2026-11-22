@@ -1,13 +1,22 @@
 package ru.kost.ruvoice.text
 
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import ru.kost.ruvoice.TestData
 import java.io.File
 
 class TextRepairTest {
-    init {
+    private var previousMorph: Morph? = null
+
+    @Before fun loadMorphology() {
+        previousMorph = Normalizer.morph
         Normalizer.morph = Morph.open(File(TestData.root(), "app/src/main/assets/morph.bin"))
+    }
+
+    @After fun restoreMorphology() {
+        Normalizer.morph = previousMorph
     }
 
     @Test fun repairsReviewedHyphenSplits() {
