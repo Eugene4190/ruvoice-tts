@@ -28,6 +28,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Set up Android SDK command-line tools
+        uses: android-actions/setup-android@v3
+        with:
+          packages: ''
+
       - name: Install NDK r28c and CMake
         run: |
           yes | sdkmanager --licenses >/dev/null
