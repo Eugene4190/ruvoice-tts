@@ -28,11 +28,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Set up Android SDK and NDK
-        uses: android-actions/setup-android@v3
-
       - name: Install NDK r28c and CMake
         run: |
+          yes | sdkmanager --licenses >/dev/null
           sdkmanager --install "ndk;28.2.13676358" "cmake;3.31.6" "platforms;android-35"
           echo "$ANDROID_HOME/cmake/3.31.6/bin" >> "$GITHUB_PATH"
           echo "ANDROID_NDK=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
