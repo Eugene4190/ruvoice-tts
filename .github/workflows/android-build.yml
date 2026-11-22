@@ -45,12 +45,41 @@ jobs:
           python -m pip install --upgrade pip executorch==1.5.0
           python -m pip install torch==2.14.0 --extra-index-url https://download.pytorch.org/whl/test/cpu
 
+      - name: Download and export the official Silero v5_5_ru voice model
+        run: |
+          mkdir -p tools
+          curl --fail --location --retry 3 --retry-all-errors \
+            https://models.silero.ai/models/tts/ru/v5_5_ru.pt \
+            --output tools/v5_5_ru.pt
+          test "$(stat -c%s tools/v5_5_ru.pt)" -gt 100000000
+          python tools/export_silero.py
+
       - name: Build device-compatible ExecuTorch AAR
         env:
           PYTHON_EXECUTABLE: ${{ env.pythonLocation }}/bin/python
         run: |
           mkdir -p app/libs
           tools/build_executorch_aar.sh "$RUNNER_TEMP/executorch-aar-build"
+
+      - name: Export and verify the XNNPACK vocoder backbone
+        env:
+          PYTHON_EXECUTABLE: ${{ env.pythonLocation }}/bin/python
+        run: python tools/vocoder_et.py
+
+      - name: Verify all mandatory voice assets before packaging
+        run: |
+          set -eu
+          for f in \
+            app/src/main/assets/silero/accentor.ptl \
+            app/src/main/assets/silero/homo.ptl \
+            app/src/main/assets/silero/silero_ru.json \
+            app/src/full/assets/silero/tts_mel.ptl \
+            app/src/full/assets/silero/head.ptl \
+            app/src/full/assets/silero/backbone.pte \
+            app/src/androidTest/assets/golden_audio.f32; do
+            test -s "$f" || { echo "Missing required voice asset: $f"; exit 1; }
+            echo "$(basename "$f"): $(stat -c%s "$f") bytes"
+          done
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
