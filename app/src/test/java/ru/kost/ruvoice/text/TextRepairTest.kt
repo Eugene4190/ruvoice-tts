@@ -24,6 +24,8 @@ class TextRepairTest {
         assertEquals("информации", TextRepair.repair("ин-формации", RuLayer))
         assertEquals("столько", TextRepair.repair("столь-ко", RuLayer))
         assertEquals("запланированного", TextRepair.repair("за-планированного", RuLayer))
+        // Общий путь по AOT-морфологии, не только вручную подтверждённые исключения.
+        assertEquals("службы", TextRepair.repair("служ-бы", RuLayer))
     }
 
     @Test fun repairsReviewedSpaceSplit() {
