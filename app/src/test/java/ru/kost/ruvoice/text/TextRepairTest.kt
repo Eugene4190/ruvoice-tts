@@ -9,10 +9,11 @@ import java.io.File
 
 class TextRepairTest {
     private var previousMorph: Morph? = null
+    private val testMorph by lazy { Morph.open(File(TestData.root(), "app/src/main/assets/morph.bin")) }
 
     @Before fun loadMorphology() {
         previousMorph = Normalizer.morph
-        Normalizer.morph = Morph.open(File(TestData.root(), "app/src/main/assets/morph.bin"))
+        Normalizer.morph = testMorph
     }
 
     @After fun restoreMorphology() {
