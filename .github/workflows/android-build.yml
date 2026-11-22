@@ -41,7 +41,9 @@ jobs:
           echo "ANDROID_NDK=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
 
       - name: Install ExecuTorch host package
-        run: python -m pip install --upgrade pip executorch==1.5.0
+        run: |
+          python -m pip install --upgrade pip executorch==1.5.0
+          python -m pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/test/cpu
 
       - name: Build device-compatible ExecuTorch AAR
         env:
