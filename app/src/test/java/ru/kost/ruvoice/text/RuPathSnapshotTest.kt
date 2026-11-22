@@ -207,6 +207,7 @@ class RuPathSnapshotTest {
             val bad = (got.keys + want.keys).filter { got[it] != want[it] }.map {
                 it + when { want[it] == null -> " (нет в эталоне)"; got[it] == null -> " (пропал)"; else -> "" }
             }
+            if (bad.isNotEmpty()) println("SNAPSHOT_DIFF=" + bad.joinToString(","))
             assertTrue("русский путь разошёлся с ru_snapshot.txt (${bad.size} из ${want.size}):\n" + bad.joinToString("\n"), bad.isEmpty())
         } finally {
             Normalizer.morph = morph; YoDict.shared = yo; HardE.shared = hardE; Emoji.shared = emoji; SymbolNames.cldr = cldr
