@@ -12,7 +12,7 @@ android {
     namespace = "ru.kost.ruvoice"
     compileSdk = 35
     defaultConfig {
-        applicationId = "ru.kost.ruvoice"
+        applicationId = "ru.kost.ruvoice.enhanced"
         minSdk = 23
         targetSdk = 35
         versionCode = 10103
