@@ -48,7 +48,9 @@ jobs:
       - name: Build device-compatible ExecuTorch AAR
         env:
           PYTHON_EXECUTABLE: ${{ env.pythonLocation }}/bin/python
-        run: tools/build_executorch_aar.sh "$RUNNER_TEMP/executorch-aar-build"
+        run: |
+          mkdir -p app/libs
+          tools/build_executorch_aar.sh "$RUNNER_TEMP/executorch-aar-build"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
