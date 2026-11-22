@@ -672,7 +672,13 @@ class SileroTtsService : TextToSpeechService() {
             val srcText = reqText.let { if (rules.on("ssml") && Ssml.isSsml(it)) Ssml.blankTags(it) else it }
                 .let { Marks.blank(it) }
             // смещения — в тексте клиента: подставленное из TtsSpan слово указывает на свой знак
-            val srcWords = nonSpace.findAll(srcText).map { Triple(Marks.key(it.value), spoken.orig(it.range.first), spoken.orig(it.range.last) + 1) }.toList()
+            // Text Cleaner объединяет OCR-разрывы и одновременно сохраняет карту к исходным символам,
+            // чтобы подсветка склеенного слова охватывала исходное написание целиком.
+            val highlightText = TextRepair.mapped(srcText, layer)
+            val srcWords = nonSpace.findAll(highlightText.text).map {
+                Triple(Marks.key(it.value), spoken.orig(highlightText.orig(it.range.first)),
+                    spoken.orig(highlightText.orig(it.range.last)) + 1)
+            }.toList()
             val matcher = Marks.Matcher(srcWords.map { it.first })
             val recorder = cacheKey?.let { PhraseCache.Recorder() }
             var enCount = 0
