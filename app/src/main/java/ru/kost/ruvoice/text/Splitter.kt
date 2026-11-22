@@ -64,6 +64,7 @@ object Splitter {
         var s = text.replace("\r\n", "\n")
         if (rules.on("dehyphen")) s = dehyphenate(s, layer)
         if (rules.on("soft_break")) s = softLineBreakRe.replace(s, " ")
+        s = TextRepair.repair(s, layer)
         return s.split(Regex("\\n+")).map { it.trim() }.filter { it.isNotEmpty() }
     }
 
