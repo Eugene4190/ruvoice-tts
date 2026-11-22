@@ -52,7 +52,10 @@ jobs:
             https://models.silero.ai/models/tts/ru/v5_5_ru.pt \
             --output tools/v5_5_ru.pt
           test "$(stat -c%s tools/v5_5_ru.pt)" -gt 100000000
+          cp app/src/main/assets/silero/silero_ru.json "$RUNNER_TEMP/silero_ru.json"
           python tools/export_silero.py
+          # export_silero.py writes a minimal upstream JSON; restore RuVoice's enriched dictionaries/rules.
+          cp "$RUNNER_TEMP/silero_ru.json" app/src/main/assets/silero/silero_ru.json
 
       - name: Build device-compatible ExecuTorch AAR
         env:
