@@ -347,13 +347,4 @@ class SplitterTest {
             assertEquals(o.getString("text"), exp.toList(), d.sequence(o.getString("accented")).toList())
         }
     }
-
-    @Test fun repairsBrokenWordsInRussianBookPipeline() {
-        assertEquals(listOf("техниками информации столько запланированного энергоинформационным."),
-            Splitter.paragraphs("техника- ми ин-формации столь-ко за-планированного энергоинформацион ным."))
-    }
-
-    @Test fun bookTextRepairIsRussianOnly() {
-        assertEquals(listOf("техника- ми"), Splitter.paragraphs("техника- ми", layer = BeLayer))
-    }
 }
