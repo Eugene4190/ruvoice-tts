@@ -53,7 +53,7 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
     /** RUAccent already resolved Russian homographs and OOV stresses; retain RuVoice grammar, Silero fill
      * for unmarked function words, user dictionary and post-processing. */
     fun applyExternal(sentence: String, source: String = sentence): String =
-        if (own == null) ruApply(sentence, source, external = true) else apply(sentence, source)
+        if (own == null) ruApply(sentence, source, external = true, presetText = source, dictSource = source) else apply(sentence, source)
 
     private val kaRe = Regex("([\\p{L}+]+)-к\\+а(?![\\p{L}+-])", RegexOption.IGNORE_CASE)
     /** «-ка» строчными за кириллическим словом в исходном тексте: «Т-34-ка», «Ли-Ка», «7-ка», «№ 301-КГ» — не частица. */
@@ -68,17 +68,17 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
         return kaRe.replace(s) { m -> if (m.groupValues[1].replace("+", "").lowercase().replace('ё', 'е') in words) m.groupValues[1] + "ка" else m.value }
     }
 
-    private fun ruApply(sentence: String, source: String, external: Boolean = false): String {
+    private fun ruApply(sentence: String, source: String, external: Boolean = false, presetText: String = sentence, dictSource: String = sentence): String {
         var s = sentence
         fun step(name: String, next: String) { trace?.add("$name: $next"); s = next }
         trace?.add("input: $sentence")
         // слова, пришедшие уже с «+» (фраза из словаря замен или ударение в самом тексте): словарь ударений их не трогает,
         // фраза конкретнее слова («обливаясь п+отом» против «потом = пот+ом»)
-        val preset = wordRe.findAll(sentence).filter { '+' in it.value }.map { it.value.lowercase() }.toSet()
+        val preset = wordRe.findAll(presetText).filter { '+' in it.value }.map { it.value.lowercase() }.toSet()
         if (rules.on("gram")) step("gram", gramPass(surnamePass(s, source), source = source))
         if (!external && rules.on("homo")) step("homo", homographPass(s))
         if (rules.on("accentor")) step("accentor", accentorPass(s))
-        step("dict", userDictPass(s, sentence, preset))
+        step("dict", userDictPass(s, dictSource, preset))
         // «скаж+и-к+а» — у частицы свой «+», модель тянет «а»: слитно и без знака, «скаж+ика» (жалоба 28.10.2026). После словаря:
         // слитное слово сдвинуло бы ему счёт слов, а «давай» из словаря пусть сначала получит своё ударение
         if (rules.on("accentor")) step("ka", fuseKa(s, source))
