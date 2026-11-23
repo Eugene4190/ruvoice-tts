@@ -57,7 +57,7 @@ jobs:
           p = Path("app/src/main/rust/vendor/ruaccent-rs/Cargo.toml")
           s = p.read_text()
           old = 'ort = { version = "2.0.0-rc.13", features = ["download-binaries"] }'
-          new = 'ort = { version = "2.0.0-rc.13", default-features = false, features = ["load-dynamic"] }'
+          new = 'ort = { version = "=2.0.0-rc.13", default-features = false, features = ["load-dynamic"] }'
           if old not in s:
               raise SystemExit("Unexpected ruaccent-rs ORT dependency declaration")
           p.write_text(s.replace(old, new))
