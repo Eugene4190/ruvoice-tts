@@ -47,6 +47,7 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
 
     fun apply(sentence: String, source: String = sentence): String {
         val own = own ?: return ruApply(sentence, source)
+        trace?.add("input: $sentence")
         return own(sentence).also { trace?.add("${layer.code}: $it") }
     }
 
