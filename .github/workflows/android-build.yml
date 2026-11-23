@@ -53,9 +53,11 @@ jobs:
             --output tools/v5_5_ru.pt
           test "$(stat -c%s tools/v5_5_ru.pt)" -gt 100000000
           cp app/src/main/assets/silero/silero_ru.json "$RUNNER_TEMP/silero_ru.json"
+          cp app/src/test/resources/golden.json "$RUNNER_TEMP/golden.json"
           python tools/export_silero.py
-          # export_silero.py writes a minimal upstream JSON; restore RuVoice's enriched dictionaries/rules.
+          # Keep RuVoice dictionaries and curated homograph golden; only generated audio reference is model-specific.
           cp "$RUNNER_TEMP/silero_ru.json" app/src/main/assets/silero/silero_ru.json
+          cp "$RUNNER_TEMP/golden.json" app/src/test/resources/golden.json
 
       - name: Build device-compatible ExecuTorch AAR
         env:
