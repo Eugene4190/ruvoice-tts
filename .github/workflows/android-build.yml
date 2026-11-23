@@ -1,4 +1,5 @@
 name: Android build
+# Full validation build triggered by the enhanced offline reader branch.
 
 on:
   workflow_dispatch:
