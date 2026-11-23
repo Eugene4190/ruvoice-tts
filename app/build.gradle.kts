@@ -13,7 +13,7 @@ android {
     compileSdk = 35
     defaultConfig {
         applicationId = "ru.kost.ruvoice.full"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 35
         versionCode = 10103
         versionName = "1.1.3"
