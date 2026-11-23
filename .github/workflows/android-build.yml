@@ -7,6 +7,10 @@ on:
     branches:
       - feature/book-text-cleaner
 
+concurrency:
+  group: ruvoice-enhanced-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
