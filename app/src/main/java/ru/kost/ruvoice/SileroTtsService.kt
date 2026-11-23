@@ -721,8 +721,9 @@ class SileroTtsService : TextToSpeechService() {
                         // StressONNX FULL FP32 is the primary Russian accentor when its offline model bundle is ready.
                         // Marks.parse has already converted manual acute marks to +; JNI skips those tokens.
                         // RuVoice grammar and personal dictionaries run afterwards and retain their priority.
-                        val neuralPrepared = if (voice.lang == "ru") StressOnnx.process(prepared) ?: prepared else prepared
-                        val (accented, endDot) = stress.modelEnd(stress.apply(neuralPrepared, marks.text))
+                        val neuralPrepared = if (voice.lang == "ru") StressOnnx.process(prepared) else null
+                        val stressed = if (neuralPrepared != null) stress.applyExternal(neuralPrepared, marks.text) else stress.apply(prepared, marks.text)
+                        val (accented, endDot) = stress.modelEnd(stressed)
                         if (auditNames) audit.names(seg.text, accented, known)
                         val segVoice = if (seg.speech) quoteVoice ?: voice else voice
                         val spoken = stress.stretchShort(accented).let {
