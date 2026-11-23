@@ -157,7 +157,7 @@ object StressOnnx {
         val ort = File(ctx.applicationInfo.nativeLibraryDir, "libonnxruntime.so")
         check(ort.isFile) { "ONNX Runtime library not found" }
         check(nativeInit(root.absolutePath, ort.absolutePath)) { "Could not initialize RUAccent FP32 models" }
-        val probe = nativeStress("Старинный замок стоял на горе. Дверной замок был сломан.")
+        val probe = nativeStress("Старинный замок стоит на горе. На двери висит замок.")
         check(probe.contains("з+амок", ignoreCase = true) && probe.contains("зам+ок", ignoreCase = true)) {
             "StressONNX contextual homograph self-test failed: $probe"
         }
