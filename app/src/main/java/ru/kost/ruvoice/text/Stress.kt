@@ -55,12 +55,6 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
     fun applyExternal(sentence: String, source: String = sentence): String =
         if (own == null) ruApply(sentence, source, external = true) else apply(sentence, source)
 
-    private fun applyLegacyBodyRemoved(sentence: String, source: String): String {
-        val own = own ?: return ruApply(sentence, source)
-        trace?.add("input: $sentence")
-        return own(sentence).also { trace?.add("${layer.code}: $it") }
-    }
-
     private val kaRe = Regex("([\\p{L}+]+)-к\\+а(?![\\p{L}+-])", RegexOption.IGNORE_CASE)
     /** «-ка» строчными за кириллическим словом в исходном тексте: «Т-34-ка», «Ли-Ка», «7-ка», «№ 301-КГ» — не частица. */
     private val kaSourceRe = Regex("([а-яё]+)-ка(?![\\p{L}\\d+-])", RegexOption.IGNORE_CASE)
