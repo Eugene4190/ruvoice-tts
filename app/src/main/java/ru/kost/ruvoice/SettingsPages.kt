@@ -149,7 +149,6 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
         voiceKept = voices.isNotEmpty() && Speaker.resolve(prefs.voice, d, packs) == null
         voiceView.missing(if (voiceKept) prefs.voice else null, Speaker.label(main))
         if (!voiceKept) voiceView.bound(main)
-        var shown = voiceView.str()
         voiceView.setOnItemClickListener { _, _, _, _ ->
             val previous = voiceView.str()
             val picked = nameOf(voiceView.str())
@@ -164,7 +163,6 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
                 host.restartForProfile(getString(R.string.profile_switched, bound.name))
                 return@setOnItemClickListener
             }
-            shown = voiceView.str()
             // голос прямой речи другого движка не трогаем: сервис читает реплики основным (takeIf по паку),
             // вернули движок — прямая речь снова своим голосом
             voiceKept = false; voiceView.missing(null, ""); picked?.let { voiceView.bound(it) }
