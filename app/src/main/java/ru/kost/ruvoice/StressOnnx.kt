@@ -94,6 +94,19 @@ object StressOnnx {
         }
     }
 
+    private fun preserveExplicitYo(source: String, prediction: String): String {
+        val originalLetters = source.filter { it != '+' }
+        val out = StringBuilder(prediction.length)
+        var index = 0
+        prediction.forEach { ch ->
+            if (ch == '+') out.append(ch) else {
+                val original = originalLetters.getOrNull(index++)
+                out.append(if (original == 'ё' || original == 'Ё') original else ch)
+            }
+        }
+        return out.toString()
+    }
+
     /** Возвращает null до полной загрузки — вызывающий код тогда использует штатный RuVoice pipeline. */
     fun process(text: String): String? {
         if (!ready || text.isBlank()) return null
@@ -112,7 +125,7 @@ object StressOnnx {
                 if (sourceBase != predictionBase) return null
                 // Keep explicit book marks and non-Russian tokens verbatim; use model output for Russian words.
                 val hasRussian = source.any { it in "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" }
-                replacements += if ('+' in source || !hasRussian) source else prediction
+                replacements += if ('+' in source || !hasRussian) source else preserveExplicitYo(source, prediction)
             }
             // Rebuild from original spans, so every paragraph, unusual punctuation, emoji and whitespace
             // survives even when RUAccent's own normalizer omits characters it cannot feed to its models.
