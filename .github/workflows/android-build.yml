@@ -131,6 +131,15 @@ jobs:
       - name: Build full Android APK
         run: ./gradlew assembleFullDebug --no-daemon
 
+      - name: Verify StressONNX native runtime is packaged
+        run: |
+          set -eu
+          apk="$(find app/build/outputs/apk/full/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$apk"
+          unzip -l "$apk" | grep -q 'lib/arm64-v8a/libruvoice_stress.so'
+          unzip -l "$apk" | grep -q 'lib/arm64-v8a/libonnxruntime.so'
+          echo "StressONNX JNI and ONNX Runtime are present in the APK"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
