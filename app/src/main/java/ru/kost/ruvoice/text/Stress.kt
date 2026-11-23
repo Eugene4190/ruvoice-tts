@@ -47,6 +47,16 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
 
     fun apply(sentence: String, source: String = sentence): String {
         val own = own ?: return ruApply(sentence, source)
+        return own(sentence).also { trace?.add("${layer.code}: $it") }
+    }
+
+    /** RUAccent already resolved Russian homographs and OOV stresses; retain only RuVoice grammar,
+     * user dictionary and post-processing so the legacy neural passes cannot overwrite FULL output. */
+    fun applyExternal(sentence: String, source: String = sentence): String =
+        if (own == null) ruApply(sentence, source, external = true) else apply(sentence, source)
+
+    private fun applyLegacyBodyRemoved(sentence: String, source: String): String {
+        val own = own ?: return ruApply(sentence, source)
         trace?.add("input: $sentence")
         return own(sentence).also { trace?.add("${layer.code}: $it") }
     }
@@ -64,7 +74,7 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
         return kaRe.replace(s) { m -> if (m.groupValues[1].replace("+", "").lowercase().replace('ё', 'е') in words) m.groupValues[1] + "ка" else m.value }
     }
 
-    private fun ruApply(sentence: String, source: String): String {
+    private fun ruApply(sentence: String, source: String, external: Boolean = false): String {
         var s = sentence
         fun step(name: String, next: String) { trace?.add("$name: $next"); s = next }
         trace?.add("input: $sentence")
@@ -72,8 +82,8 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
         // фраза конкретнее слова («обливаясь п+отом» против «потом = пот+ом»)
         val preset = wordRe.findAll(sentence).filter { '+' in it.value }.map { it.value.lowercase() }.toSet()
         if (rules.on("gram")) step("gram", gramPass(surnamePass(s, source), source = source))
-        if (rules.on("homo")) step("homo", homographPass(s))
-        if (rules.on("accentor")) step("accentor", accentorPass(s))
+        if (!external && rules.on("homo")) step("homo", homographPass(s))
+        if (!external && rules.on("accentor")) step("accentor", accentorPass(s))
         step("dict", userDictPass(s, sentence, preset))
         // «скаж+и-к+а» — у частицы свой «+», модель тянет «а»: слитно и без знака, «скаж+ика» (жалоба 28.10.2026). После словаря:
         // слитное слово сдвинуло бы ему счёт слов, а «давай» из словаря пусть сначала получит своё ударение
