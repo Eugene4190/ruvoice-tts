@@ -50,8 +50,8 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
         return own(sentence).also { trace?.add("${layer.code}: $it") }
     }
 
-    /** RUAccent already resolved Russian homographs and OOV stresses; retain only RuVoice grammar,
-     * user dictionary and post-processing so the legacy neural passes cannot overwrite FULL output. */
+    /** RUAccent already resolved Russian homographs and OOV stresses; retain RuVoice grammar, Silero fill
+     * for unmarked function words, user dictionary and post-processing. */
     fun applyExternal(sentence: String, source: String = sentence): String =
         if (own == null) ruApply(sentence, source, external = true) else apply(sentence, source)
 
