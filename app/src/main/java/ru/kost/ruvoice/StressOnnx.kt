@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * StressONNX FULL FP32: четыре RUAccent ONNX-модели + словари. Файлы берутся с закреплённого
  * Hugging Face revision, хранятся в filesDir и после первой загрузки работают без сети.
- * Ручные ударения с '+' исключаются из инференса в JNI; результат возвращается в '+'-нотации Silero.
+ * Ручные ударения сохраняются после полного контекстного инференса; результат — в '+'-нотации Silero.
  */
 object StressOnnx {
     private const val TAG = "RuVoice-StressONNX"
@@ -68,7 +68,7 @@ object StressOnnx {
                             dest.parentFile?.mkdirs()
                             download(artifact.remote, dest)
                         }
-                        status(ctx, "StressONNX FULL FP32: ${index + 1}/${artifacts.size}")
+                        status(ctx, "Загрузка StressONNX FULL FP32: ${index + 1}/${artifacts.size}")
                     }
                 }
                 // ruaccent-rs читает ключи словаря accents.json.gz; в StressONNX bundle тот же слой
@@ -76,6 +76,7 @@ object StressOnnx {
                 val accents = File(root, "dictionary/accents_nn.json.gz")
                 val legacyName = File(root, "dictionary/accents.json.gz")
                 if (!legacyName.isFile || legacyName.length() != accents.length()) accents.copyTo(legacyName, overwrite = true)
+                status(ctx, "Загрузка StressONNX FULL FP32: инициализация")
                 loadNative(root)
                 ready = true
                 ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
