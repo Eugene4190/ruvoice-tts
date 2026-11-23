@@ -94,7 +94,14 @@ object StressOnnx {
     /** Возвращает null до полной загрузки — вызывающий код тогда использует штатный RuVoice pipeline. */
     fun process(text: String): String? {
         if (!ready || text.isBlank()) return null
-        return try { nativeStress(text) } catch (e: Throwable) {
+        return try {
+            val marked = nativeStress(text)
+            // RUAccent may restore е→ё and insert '+', but it must not lose or reorder source characters.
+            // If its normalization changes any other character/space, leave the original for the safe RuVoice path.
+            val original = text.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
+            val output = marked.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
+            marked.takeIf { output == original }
+        } catch (e: Throwable) {
             Log.e(TAG, "StressONNX inference failed; using built-in stress pipeline", e)
             null
         }
