@@ -77,7 +77,7 @@ class Stress(private val d: SileroData, private val models: StressModels, privat
         val preset = wordRe.findAll(sentence).filter { '+' in it.value }.map { it.value.lowercase() }.toSet()
         if (rules.on("gram")) step("gram", gramPass(surnamePass(s, source), source = source))
         if (!external && rules.on("homo")) step("homo", homographPass(s))
-        if (!external && rules.on("accentor")) step("accentor", accentorPass(s))
+        if (rules.on("accentor")) step("accentor", accentorPass(s))
         step("dict", userDictPass(s, sentence, preset))
         // «скаж+и-к+а» — у частицы свой «+», модель тянет «а»: слитно и без знака, «скаж+ика» (жалоба 28.10.2026). После словаря:
         // слитное слово сдвинуло бы ему счёт слов, а «давай» из словаря пусть сначала получит своё ударение
