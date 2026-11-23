@@ -136,6 +136,8 @@ object StressOnnx {
             .getString(KEY_STATUS, "StressONNX FULL FP32: ожидает загрузки") ?: "StressONNX FULL FP32: ожидает загрузки"
 
     private fun loadNative(root: File) {
+        // Preload ORT through Android before ort::init_from opens the same library path.
+        System.loadLibrary("onnxruntime")
         System.loadLibrary("ruvoice_stress")
         val ctx = appContext ?: throw IllegalStateException("Application context unavailable")
         val ort = File(ctx.applicationInfo.nativeLibraryDir, "libonnxruntime.so")
