@@ -174,7 +174,7 @@ object StressOnnx {
                 try {
                     connection.connect()
                     check(connection.responseCode in 200..299) { "HTTP ${connection.responseCode}: $path" }
-                    val expectedLength = connection.contentLengthLong
+                    val expectedLength = connection.contentLength.toLong()
                     connection.inputStream.use { input ->
                         FileOutputStream(part).buffered().use { output ->
                             val buffer = ByteArray(128 * 1024)
