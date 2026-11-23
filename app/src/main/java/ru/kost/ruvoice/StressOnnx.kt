@@ -28,7 +28,7 @@ object StressOnnx {
     @Volatile private var appContext: Context? = null
 
     private data class Artifact(val remote: String, val local: String)
-    private val markedWord = Regex("[а-яё+]+(?:-[а-яё+]+)*", RegexOption.IGNORE_CASE)
+    private val markedWord = Regex("[A-Za-zА-Яа-яЁё0-9+]+(?:-[A-Za-zА-Яа-яЁё0-9+]+)*", RegexOption.IGNORE_CASE)
 
     private val artifacts = listOf(
         Artifact("nn_accent/model.onnx", "nn/nn_accent/model.onnx"),
@@ -102,19 +102,29 @@ object StressOnnx {
             val sourceWords = markedWord.findAll(text).toList()
             val inferredWords = markedWord.findAll(inferred).toList()
             if (sourceWords.size != inferredWords.size) return null
-            val restored = StringBuilder(inferred)
-            // RUAccent re-derives existing '+' marks. Restore explicit marks from the book after inference.
-            for (i in sourceWords.indices.reversed()) {
-                if ('+' in sourceWords[i].value) {
-                    val range = inferredWords[i].range
-                    restored.replace(range.first, range.last + 1, sourceWords[i].value)
-                }
+            val replacements = ArrayList<String>(sourceWords.size)
+            for (i in sourceWords.indices) {
+                val source = sourceWords[i].value
+                val prediction = inferredWords[i].value
+                val sourceBase = source.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
+                val predictionBase = prediction.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
+                if (sourceBase != predictionBase) return null
+                // Keep explicit book marks and non-Russian tokens verbatim; use model output for Russian words.
+                val hasRussian = source.any { it in "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" }
+                replacements += if ('+' in source || !hasRussian) source else prediction
             }
-            val result = restored.toString()
-            // RUAccent may add '+' and restore е→ё, but must not lose/reorder any source character or space.
-            val original = text.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
-            val output = result.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
-            result.takeIf { output == original }
+            // Rebuild from original spans, so every paragraph, unusual punctuation, emoji and whitespace
+            // survives even when RUAccent's own normalizer omits characters it cannot feed to its models.
+            val restored = StringBuilder(text.length + replacements.size)
+            var cursor = 0
+            for (i in sourceWords.indices) {
+                val range = sourceWords[i].range
+                restored.append(text, cursor, range.first)
+                restored.append(replacements[i])
+                cursor = range.last + 1
+            }
+            restored.append(text, cursor, text.length)
+            restored.toString()
         } catch (e: Throwable) {
             Log.e(TAG, "StressONNX inference failed; using built-in stress pipeline", e)
             null
