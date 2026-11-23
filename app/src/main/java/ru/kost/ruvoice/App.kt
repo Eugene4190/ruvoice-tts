@@ -28,10 +28,11 @@ class App : Application() {
     private fun installExtendedRussianVoices() {
         val prefs = getSharedPreferences("voice_pack_bootstrap", Context.MODE_PRIVATE)
         if (Packs.find(filesDir, EXTENDED_PACK_ID) != null) {
-            prefs.edit().putBoolean("installed", true).apply()
+            prefs.edit().putBoolean("installed", true).putString("status", "22 русских голоса готовы").apply()
             return
         }
         if (prefs.getBoolean("installed", false)) prefs.edit().putBoolean("installed", false).apply()
+        prefs.edit().putString("status", "Загрузка пакета 22 русских голосов").apply()
         bootstrap.execute {
             val archive = File(cacheDir, "ruvoice-pack-ru_voices.zip")
             try {
@@ -61,9 +62,10 @@ class App : Application() {
                     connection.disconnect()
                 }
                 archive.inputStream().buffered().use { Packs.install(it, filesDir) }
-                prefs.edit().putBoolean("installed", true).apply()
+                prefs.edit().putBoolean("installed", true).putString("status", "22 русских голоса готовы").apply()
                 Log.i(TAG, "Installed official 22-voice Russian pack")
             } catch (e: Exception) {
+                prefs.edit().putString("status", "Пакет голосов: ошибка загрузки, повтор при следующем запуске").apply()
                 Log.w(TAG, "Could not install extended Russian voices; will retry next launch", e)
             } finally {
                 archive.delete()
