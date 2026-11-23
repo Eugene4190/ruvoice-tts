@@ -41,6 +41,29 @@ jobs:
           echo "$ANDROID_HOME/cmake/3.31.6/bin" >> "$GITHUB_PATH"
           echo "ANDROID_NDK=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
 
+      - name: Set up Rust toolchain for StressONNX JNI
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Build StressONNX native Android bridge
+        run: |
+          cargo install cargo-ndk --locked
+          mkdir -p app/src/main/rust/vendor
+          git clone --depth 1 https://github.com/alksef/ruaccent-rs.git app/src/main/rust/vendor/ruaccent-rs
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("app/src/main/rust/vendor/ruaccent-rs/Cargo.toml")
+          s = p.read_text()
+          old = 'ort = { version = "2.0.0-rc.13", features = ["download-binaries"] }'
+          new = 'ort = { version = "2.0.0-rc.13", default-features = false, features = ["load-dynamic"] }'
+          if old not in s:
+              raise SystemExit("Unexpected ruaccent-rs ORT dependency declaration")
+          p.write_text(s.replace(old, new))
+          PY
+          cd app/src/main/rust
+          cargo ndk -t arm64-v8a -o ../jniLibs build --release
+
       - name: Install ExecuTorch host package
         run: |
           python -m pip install --upgrade pip executorch==1.5.0
