@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">RuVoice Enhanced</string>
+    <string name="app_name">RuVoice FULL</string>
     <string name="engine_bootstrap_status">Пакет голосов: подготовка…\nStressONNX FULL FP32: подготовка…</string>
 
     <!-- Вкладки -->
