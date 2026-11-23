@@ -103,15 +103,16 @@ private fun View.dropdown(id: Int, items: List<String>, value: String) =
 class VoiceFragment : PageFragment(R.layout.fragment_voice) {
     private val rates = listOf(48000, 24000)
     private val d by lazy { SileroModels.data(requireContext()) }
-    private val packs by lazy { Packs.installed(requireContext().filesDir) }
-    // Список голосов из модели и установленных паков (Speaker.names), в списке подписи Speaker.label.
-    private val voices by lazy { Speaker.names(d, packs) }
+    private val packs get() = Packs.installed(requireContext().filesDir)
+    // Обновляется при установке пакета в фоне; старый список нельзя кешировать на весь срок жизни фрагмента.
+    private val voices get() = Speaker.names(d, packs)
     private fun nameOf(label: String) = voices.firstOrNull { Speaker.label(it) == label }
     private val rateItems by lazy { rates.map { getString(R.string.sample_rate_item, it) } }
     /** Голоса из prefs нет на телефоне (профиль или файл с другого телефона, пак удалили): в выпадашке —
      * тот, которым сейчас читается, но в prefs он не пишется, пока голос не выберут сами, — вернули пак,
      * и профиль снова читает своим голосом. */
     private var voiceKept = false
+    private var voicePackWasReady = false
     private val statusHandler = Handler(Looper.getMainLooper())
     private val statusPoll = object : Runnable {
         override fun run() {
@@ -120,6 +121,20 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
                 .getString("status", "Пакет голосов: ожидает загрузки") ?: "Пакет голосов: ожидает загрузки"
             val stressStatus = StressOnnx.status(ctx)
             view?.findViewById<TextView>(R.id.stressStatus)?.text = "$packStatus\n$stressStatus"
+            if (packStatus.contains("22 русских голоса готовы") && !voicePackWasReady) {
+                voicePackWasReady = true
+                view?.findViewById<MaterialAutoCompleteTextView>(R.id.voice)?.let { voiceView ->
+                    val items = voices.map { Speaker.label(it) }
+                    voiceView.setSimpleItems(items.toTypedArray())
+                    val restored = Speaker.resolve(prefs.voice, d, packs)?.name
+                    if (restored != null) {
+                        voiceView.setText(Speaker.label(restored), false)
+                        voiceKept = false
+                        voiceView.missing(null, "")
+                        voiceView.bound(restored)
+                    }
+                }
+            }
             if (isResumed && (packStatus.contains("Загрузка") || stressStatus.contains("Загрузка") || stressStatus.contains("ожидает"))) {
                 statusHandler.postDelayed(this, 1000)
             }
@@ -136,11 +151,12 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
         if (!voiceKept) voiceView.bound(main)
         var shown = voiceView.str()
         voiceView.setOnItemClickListener { _, _, _, _ ->
+            val previous = voiceView.str()
             val picked = nameOf(voiceView.str())
             val bound = picked?.let { Profiles(requireContext()).boundOther(it) }
             if (bound != null) {
                 // голос привязан к другому профилю — включается тот, с этим голосом; у этого голос прежний
-                voiceView.setText(shown, false)
+                voiceView.setText(previous, false)
                 val host = activity as SettingsActivity
                 host.saveAllVisiblePages()
                 Profiles(requireContext()).switchTo(bound.id)
