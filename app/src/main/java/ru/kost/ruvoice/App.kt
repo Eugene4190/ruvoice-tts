@@ -16,6 +16,7 @@ class App : Application() {
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(nightMode(this))
         installExtendedRussianVoices()
+        StressOnnx.bootstrap(this)
     }
 
     /**
