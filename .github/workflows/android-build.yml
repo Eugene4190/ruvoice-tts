@@ -50,7 +50,8 @@ jobs:
         run: |
           cargo install cargo-ndk --locked
           mkdir -p app/src/main/rust/vendor
-          git clone --depth 1 https://github.com/alksef/ruaccent-rs.git app/src/main/rust/vendor/ruaccent-rs
+          git clone https://github.com/alksef/ruaccent-rs.git app/src/main/rust/vendor/ruaccent-rs
+          git -C app/src/main/rust/vendor/ruaccent-rs checkout 4dd4b2f49d2250ee17448484d040180e042f9cee
           python - <<'PY'
           from pathlib import Path
           p = Path("app/src/main/rust/vendor/ruaccent-rs/Cargo.toml")
@@ -62,7 +63,7 @@ jobs:
           p.write_text(s.replace(old, new))
           PY
           cd app/src/main/rust
-          cargo ndk -t arm64-v8a -o ../jniLibs build --release
+          cargo ndk -t arm64-v8a -p 23 -o ../jniLibs build --release
 
       - name: Install ExecuTorch host package
         run: |
