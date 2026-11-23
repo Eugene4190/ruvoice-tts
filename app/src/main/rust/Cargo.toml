@@ -9,4 +9,4 @@ crate-type = ["cdylib"]
 [dependencies]
 jni = "0.21.1"
 ruaccent_rs = { path = "vendor/ruaccent-rs" }
-ort = { version = "2.0.0-rc.13", default-features = false, features = ["load-dynamic"] }
+ort = { version = "=2.0.0-rc.13", default-features = false, features = ["load-dynamic"] }
