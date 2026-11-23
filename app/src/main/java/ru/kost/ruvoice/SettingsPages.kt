@@ -119,7 +119,7 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
             val packStatus = ctx.getSharedPreferences("voice_pack_bootstrap", Context.MODE_PRIVATE)
                 .getString("status", "Пакет голосов: ожидает загрузки") ?: "Пакет голосов: ожидает загрузки"
             val stressStatus = StressOnnx.status(ctx)
-            view?.findViewById<TextView>(R.id.stressStatus)?.text = "$packStatus\\n$stressStatus"
+            view?.findViewById<TextView>(R.id.stressStatus)?.text = "$packStatus\n$stressStatus"
             if (isResumed && (packStatus.contains("Загрузка") || stressStatus.contains("Загрузка") || stressStatus.contains("ожидает"))) {
                 statusHandler.postDelayed(this, 1000)
             }
