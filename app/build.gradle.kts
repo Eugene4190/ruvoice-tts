@@ -80,6 +80,8 @@ dependencies {
     // tools/build_executorch_aar.sh — готовый с ossci-android.s3.amazonaws.com падает SIGILL на ARMv8.0 (см. скрипт).
     implementation(files("libs/executorch-1.5.0-xnnpack.aar"))
     implementation("com.facebook.soloader:soloader:0.10.5")
+    // StressONNX FULL FP32: ONNX Runtime CPU inference, loaded by the Rust JNI adapter.
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.32.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
