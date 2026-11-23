@@ -3,6 +3,8 @@ package ru.kost.ruvoice
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
@@ -110,6 +112,19 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
      * тот, которым сейчас читается, но в prefs он не пишется, пока голос не выберут сами, — вернули пак,
      * и профиль снова читает своим голосом. */
     private var voiceKept = false
+    private val statusHandler = Handler(Looper.getMainLooper())
+    private val statusPoll = object : Runnable {
+        override fun run() {
+            val ctx = context ?: return
+            val packStatus = ctx.getSharedPreferences("voice_pack_bootstrap", Context.MODE_PRIVATE)
+                .getString("status", "Пакет голосов: ожидает загрузки") ?: "Пакет голосов: ожидает загрузки"
+            val stressStatus = StressOnnx.status(ctx)
+            view?.findViewById<TextView>(R.id.stressStatus)?.text = "$packStatus\\n$stressStatus"
+            if (isResumed && (packStatus.contains("Загрузка") || stressStatus.contains("Загрузка") || stressStatus.contains("ожидает"))) {
+                statusHandler.postDelayed(this, 1000)
+            }
+        }
+    }
 
     override fun load(v: View) {
         // lite без пака: голосов нет — пустые выпадашки, кнопки ниже ничего не делают.
@@ -189,6 +204,8 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
     // с системного экрана (onResume).
     override fun onResume() {
         super.onResume()
+        statusHandler.removeCallbacks(statusPoll)
+        statusHandler.post(statusPoll)
         val cr = requireContext().contentResolver
         fun read(key: String) = "%.2f".format(Locale.ROOT, Settings.Secure.getInt(cr, key, 100) / 100f)
         view?.findViewById<TextView>(R.id.sysValues)?.text =
@@ -200,6 +217,10 @@ class VoiceFragment : PageFragment(R.layout.fragment_voice) {
         nameOf(voiceView.str())?.let { voiceView.bound(it) }
     }
 
+    override fun onPause() {
+        statusHandler.removeCallbacks(statusPoll)
+        super.onPause()
+    }
 }
 
 /** Паузы и выгрузка моделей. */
