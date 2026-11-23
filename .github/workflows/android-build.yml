@@ -135,11 +135,18 @@ jobs:
       - name: Build full Android APK
         run: ./gradlew assembleFullDebug --no-daemon
 
+      - name: Name final APK
+        run: |
+          set -eu
+          apk="$(find app/build/outputs/apk/full/debug -maxdepth 1 -name '*.apk' ! -name '*androidTest*' -print -quit)"
+          test -n "$apk"
+          cp "$apk" app/build/outputs/apk/full/debug/RuVoice-FULL.apk
+
       - name: Verify StressONNX native runtime is packaged
         run: |
           set -eu
-          apk="$(find app/build/outputs/apk/full/debug -maxdepth 1 -name '*.apk' -print -quit)"
-          test -n "$apk"
+          apk="app/build/outputs/apk/full/debug/RuVoice-FULL.apk"
+          test -s "$apk"
           unzip -l "$apk" | grep -q 'lib/arm64-v8a/libruvoice_stress.so'
           unzip -l "$apk" | grep -q 'lib/arm64-v8a/libonnxruntime.so'
           echo "StressONNX JNI and ONNX Runtime are present in the APK"
@@ -147,7 +154,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: RuVoice-Enhanced-full-debug
-          path: app/build/outputs/apk/full/debug/*.apk
+          name: RuVoice-FULL-APK
+          path: app/build/outputs/apk/full/debug/RuVoice-FULL.apk
           if-no-files-found: error
           retention-days: 14
