@@ -28,6 +28,8 @@ object StressOnnx {
     @Volatile private var appContext: Context? = null
 
     private data class Artifact(val remote: String, val local: String)
+    private val markedWord = Regex("[а-яё+]+(?:-[а-яё+]+)*", RegexOption.IGNORE_CASE)
+
     private val artifacts = listOf(
         Artifact("nn_accent/model.onnx", "nn/nn_accent/model.onnx"),
         Artifact("nn_accent/vocab.txt", "nn/nn_accent/vocab.txt"),
@@ -95,12 +97,24 @@ object StressOnnx {
     fun process(text: String): String? {
         if (!ready || text.isBlank()) return null
         return try {
-            val marked = nativeStress(text)
-            // RUAccent may restore е→ё and insert '+', but it must not lose or reorder source characters.
-            // If its normalization changes any other character/space, leave the original for the safe RuVoice path.
+            // Run on the complete sentence so every homograph keeps its surrounding context.
+            val inferred = nativeStress(text)
+            val sourceWords = markedWord.findAll(text).toList()
+            val inferredWords = markedWord.findAll(inferred).toList()
+            if (sourceWords.size != inferredWords.size) return null
+            val restored = StringBuilder(inferred)
+            // RUAccent re-derives existing '+' marks. Restore explicit marks from the book after inference.
+            for (i in sourceWords.indices.reversed()) {
+                if ('+' in sourceWords[i].value) {
+                    val range = inferredWords[i].range
+                    restored.replace(range.first, range.last + 1, sourceWords[i].value)
+                }
+            }
+            val result = restored.toString()
+            // RUAccent may add '+' and restore е→ё, but must not lose/reorder any source character or space.
             val original = text.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
-            val output = marked.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
-            marked.takeIf { output == original }
+            val output = result.replace("+", "").replace('ё', 'е').replace('Ё', 'Е')
+            result.takeIf { output == original }
         } catch (e: Throwable) {
             Log.e(TAG, "StressONNX inference failed; using built-in stress pipeline", e)
             null
