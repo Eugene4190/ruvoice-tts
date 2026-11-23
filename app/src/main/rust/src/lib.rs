@@ -53,7 +53,7 @@ pub extern "system" fn Java_ru_kost_ruvoice_StressOnnx_nativeStress(
     };
     let result = match slot().lock() {
         Ok(mut guard) => match guard.as_mut() {
-            Some(model) => model.process_all_with_skip(&original, r"(?i)[а-яё]*\+[а-яё]*"),
+            Some(model) => model.process_all(&original),
             None => original,
         },
         Err(_) => original,
